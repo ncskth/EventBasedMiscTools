@@ -16,7 +16,7 @@ def getInputs(argv):
     try:
         opts, args = getopt.getopt(argv,"i:n:",["ifile=","nevents="])
     except getopt.GetoptError:
-        print('aedat2csv.py -i <inputfile> -n <nb_events>')
+        print('parse_csv.py -i <inputfile> -n <nb_events>')
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-i", "--ifile"):
