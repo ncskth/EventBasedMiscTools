@@ -11,10 +11,12 @@ import os
 import pdb
 
 
+binatt = ["data_type", "loopA_mode", "loopB_mode", "loopC_mode", "event_data_format", "hour", "minute", "second", "package_count"]
+
 '''
     This function prints 8 nibbles of a 32-bit integer
 '''
-def log_nibbles_b(a):
+def log_8_nibbles_b(a):
 
     nibble1 = format((a & int.from_bytes(b'\x00\x00\x00\xF0',"little"))>>28, '#06b')
     nibble2 = format((a & int.from_bytes(b'\x00\x00\x00\x0F',"little"))>>24, '#06b')
@@ -34,7 +36,7 @@ def log_nibbles_b(a):
 '''
     This function prints 8 nibbles of a 32-bit integer
 '''
-def log_nibbles_h(a):
+def log_8_nibbles_h(a):
 
     nibble1 = format((a & int.from_bytes(b'\x00\x00\x00\xF0',"little"))>>28, '#01x')
     nibble2 = format((a & int.from_bytes(b'\x00\x00\x00\x0F',"little"))>>24, '#01x')
@@ -48,6 +50,29 @@ def log_nibbles_h(a):
     print(nibble7 + " " + nibble8)
     print(nibble5 + " " + nibble6)
     print(nibble3 + " " + nibble4)
+    print(nibble1 + " " + nibble2)
+
+    return a
+
+
+'''
+    This function prints 2 nibbles of a 32-bit integer
+'''
+def log_2_nibbles_b(a):
+    nibble1 = format((a & int.from_bytes(b'\xF0\x00\x00\x00',"little"))>>4, '#06b')
+    nibble2 = format((a & int.from_bytes(b'\x0F\x00\x00\x00',"little"))>>0, '#06b')
+
+    print("Original: " + str(a) + " --> " + nibble1 + " " + nibble2 + "\n")
+
+    return a
+
+'''
+    This function prints 2 nibbles of a 32-bit integer
+'''
+def log_2_nibbles_h(a):
+    nibble1 = format((a & int.from_bytes(b'\xF0\x00\x00\x00',"little"))>>4, '#01x')
+    nibble2 = format((a & int.from_bytes(b'\x0F\x00\x00\x00',"little"))>>0, '#01x')
+
     print(nibble1 + " " + nibble2)
 
     return a
@@ -77,36 +102,87 @@ def convert(argv, flag=False, n=-1):
         print("\n")
         print("HEADER")
 
-        for i in range(3):
-        #     # Read first byte of current line without advancing position
-        #     pos = ifile.tell()
-            line = ifile.read(4)
-            log_nibbles_h(int.from_bytes(line, "little"))
+        for i in range(8):
+            print(binatt[i])
+            line = ifile.read(1)
+            log_2_nibbles_b(int.from_bytes(line, "little"))
+            print("\n")
+
+        print("package_count")
+        line = ifile.read(4)
+        log_8_nibbles_b(int.from_bytes(line, "little"))
+        print("\n")
+
+        print("\n")
+        print("DATA")
 
         #Package Length
-        print("Package Length")
-        line = ifile.read(4)
-        a = log_nibbles_b(int.from_bytes(line, "little"))
-
-        c = 0
+        count = 0
         while True:
 
-            word = ifile.read(4)
-            if word == b'':
-                print(str(c) + " package buffers were found")
-                break
+            line = ifile.read(4)
+            if line == b'':
+                    break
+            else:
+                count +=1
+                print("Package #" + str(count))
 
-            a = int.from_bytes(word, "little")
-            if a == 357001:
-                c += 1
-                pos = ifile.tell()
-                print("\n\n\nPackage Length at: " + str(pos))
-                ifile.read(a)
-                ifile.read(8)
-                word = ifile.read(4)
-                a = int.from_bytes(word, "little")
-                print("IMU count: " + str(a))
-                ifile.seek(pos)
+            print("Package Length")
+            a = log_8_nibbles_b(int.from_bytes(line, "little"))
+
+            # Reading Package Buffer
+            line = ifile.read(a)
+
+            for i in range(int(a/7)):
+                p_a = line[i*7+0]<<6 + 0 # E[5:0]
+                p_b = line[i*7+1]<<6 + 0 # F[3:0] + E[7:6]
+                p_c = line[i*7+2]<<6 + 0 # G[1:0] + F[7:4]
+                p_d = line[i*7+3]<<6 + 0 # G[7:2]
+                # format(p_a, '#01x')
+                pdb.set_trace()
+
+
+            line = ifile.read(8)
+            print("Timestamp")
+            a = log_8_nibbles_b(int.from_bytes(line, "little"))
+
+
+            line = ifile.read(4)
+            print("IMU count")
+            a = log_8_nibbles_b(int.from_bytes(line, "little"))
+
+            # Reading IMU Data
+            line = ifile.read(a*32)
+
+
+
+
+        # c = 0
+        # k = 1
+        # while True:
+        #     pos = ifile.tell()
+        #     line = ifile.read(4)
+        #     if line == b'':
+        #         break
+        #     a = int.from_bytes(line, "little")
+        #     c += 1
+        #     if a == 357001:
+        #         print("c = " + str(c) + "**************************")
+        #         c = 0
+        #         k += 1
+        #         print("k = " + str(k) + ": a = " + str(a) + " at pos = " + str(pos))
+        #         ifile.read(a)
+        #         print("Timestamp")
+        #         line = ifile.read(8)
+        #         a = log_8_nibbles_b(int.from_bytes(line, "little"))
+        #         print("@@@" + str(ifile.tell()))
+        #         print("IMU count")
+        #         line = ifile.read(4)
+        #         a = log_8_nibbles_b(int.from_bytes(line, "little"))
+        #     else:
+        #         ifile.seek(pos)
+        #         ifile.read(1)
+        #         c += 1
 
 
 
@@ -128,7 +204,7 @@ def convert(argv, flag=False, n=-1):
         # #Package Length
         # print("Package Length")
         # line = ifile.read(4)
-        # a = log_nibbles_b(int.from_bytes(line, "little"))
+        # a = log_8_nibbles_b(int.from_bytes(line, "little"))
         #
         # # Package Buffer
         # line = ifile.read(a)
@@ -139,7 +215,7 @@ def convert(argv, flag=False, n=-1):
         # #IMU count
         # print("IMU count")
         # line = ifile.read(4)
-        # a = log_nibbles_b(int.from_bytes(line, "little"))
+        # a = log_8_nibbles_b(int.from_bytes(line, "little"))
         #
         # #IMU data
         # line = ifile.read(a*28)
@@ -147,7 +223,7 @@ def convert(argv, flag=False, n=-1):
         # #Package Length
         # print("Package Length")
         # line = ifile.read(4)
-        # a = log_nibbles_b(int.from_bytes(line, "little"))
+        # a = log_8_nibbles_b(int.from_bytes(line, "little"))
 
 
         print("\n")
