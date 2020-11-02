@@ -117,177 +117,127 @@ def convert(argv, flag=False, n=-1):
 
         row = -1
         col = -1
+        t_s = -1
 
-        #Package Length
         count = 0
-        while True:
+        stopLoop = False
 
-            line = ifile.read(4)
-            if line == b'':
-                    break
-            else:
-                count +=1
-                print("Package #" + str(count))
+        with open(outputfile, 'w') as ofile:
 
-            print("Package Length")
-            a = log_8_nibbles_b(int.from_bytes(line, "little"))
+            csvwriter = csv.writer(ofile, delimiter=',')
 
-            # Reading Package Buffer
-            line = ifile.read(a)
+            while not stopLoop:
 
-            for i in range(int(a/7)):
+                line = ifile.read(4)
+                if line == b'':
+                        break
 
-                print("Byte_A: " + format(line[i*7+0],'#06b'))
-                print("Byte_B: " + format(line[i*7+1],'#06b'))
-                print("Byte_C: " + format(line[i*7+2],'#06b'))
-                print("Byte_D: " + format(line[i*7+3],'#06b'))
-                print("Byte_E: " + format(line[i*7+4],'#06b'))
-                print("Byte_F: " + format(line[i*7+5],'#06b'))
-                print("Byte_G: " + format(line[i*7+6],'#06b'))
+                # print("Package Length")
+                # a = log_8_nibbles_b(int.from_bytes(line, "little"))
 
-                p_a_1 = (line[i*7+0])<<6
-                p_a_2 = (line[i*7+4] & (int.from_bytes(b'\x3F',"little")))
-                p_b_1 = (line[i*7+1])<<6
-                p_b_2 = (line[i*7+5] & (int.from_bytes(b'\x0F',"little")))<<2
-                p_b_3 = (line[i*7+4] & (int.from_bytes(b'\xC0',"little")))>>6
-                p_c_1 = (line[i*7+2])<<6
-                p_c_2 = (line[i*7+6] & (int.from_bytes(b'\x03',"little")))<<4
-                p_c_3 = (line[i*7+5] & (int.from_bytes(b'\xF0',"little")))>>4
-                p_d_1 = (line[i*7+3])<<6
-                p_d_2 = (line[i*7+6] & (int.from_bytes(b'\xFC',"little")))>>2
+                a = int.from_bytes(line, "little")
 
-                print("A[7:0]<<6: " + format(p_a_1 ,'#06b'))
-                print("E[5:0]: " + format(p_a_2 ,'#06b'))
-                print("B[7:0]<<6: " + format(p_b_1 ,'#06b'))
-                print("F[3:0]<<2: " + format(p_b_2 ,'#06b'))
-                print("E[7:6]>>6: " + format(p_b_3 ,'#06b'))
-                print("C[7:0]<<6: " + format(p_c_1 ,'#06b'))
-                print("G[1:0]<<4: " + format(p_c_2 ,'#06b'))
-                print("F[7:4]>>4: " + format(p_c_3 ,'#06b'))
-                print("D[7:0]<<6: " + format(p_d_1 ,'#06b'))
-                print("G[7:2]>>2: " + format(p_d_2 ,'#06b'))
+                # Reading Package Buffer
+                line = ifile.read(a)
 
-                p_a = p_a_1 + p_a_2
-                p_b = p_b_1 + p_b_2 + p_b_3
-                p_c = p_c_1 + p_c_2 + p_c_3
-                p_d = p_d_1 + p_d_2
-                # format(p_a, '#01x')
+                for i in range(int(a/7)):
 
-                print("p_A: " + format(p_a,'#06b'))
-                print("p_B: " + format(p_b,'#06b'))
-                print("p_C: " + format(p_c,'#06b'))
-                print("p_D: " + format(p_d,'#06b'))
+                    if stopLoop:
+                        break
 
+                    # print("Byte_A: " + format(line[i*7+0],'#06b'))
+                    # print("Byte_B: " + format(line[i*7+1],'#06b'))
+                    # print("Byte_C: " + format(line[i*7+2],'#06b'))
+                    # print("Byte_D: " + format(line[i*7+3],'#06b'))
+                    # print("Byte_E: " + format(line[i*7+4],'#06b'))
+                    # print("Byte_F: " + format(line[i*7+5],'#06b'))
+                    # print("Byte_G: " + format(line[i*7+6],'#06b'))
 
-                p_x = [p_a, p_b, p_c, p_d]
+                    p_a_1 = (line[i*7+0])<<6
+                    p_a_2 = (line[i*7+4] & (int.from_bytes(b'\x3F',"little")))
+                    p_b_1 = (line[i*7+1])<<6
+                    p_b_2 = (line[i*7+5] & (int.from_bytes(b'\x0F',"little")))<<2
+                    p_b_3 = (line[i*7+4] & (int.from_bytes(b'\xC0',"little")))>>6
+                    p_c_1 = (line[i*7+2])<<6
+                    p_c_2 = (line[i*7+6] & (int.from_bytes(b'\x03',"little")))<<4
+                    p_c_3 = (line[i*7+5] & (int.from_bytes(b'\xF0',"little")))>>4
+                    p_d_1 = (line[i*7+3])<<6
+                    p_d_2 = (line[i*7+6] & (int.from_bytes(b'\xFC',"little")))>>2
 
-                id_a = (p_a & int.from_bytes(b'\x03\x00',"little"))
-                id_b = (p_b & int.from_bytes(b'\x03\x00',"little"))
-                id_c = (p_c & int.from_bytes(b'\x03\x00',"little"))
-                id_d = (p_d & int.from_bytes(b'\x03\x00',"little"))
+                    # print("A[7:0]<<6: " + format(p_a_1 ,'#06b'))
+                    # print("E[5:0]: " + format(p_a_2 ,'#06b'))
+                    # print("B[7:0]<<6: " + format(p_b_1 ,'#06b'))
+                    # print("F[3:0]<<2: " + format(p_b_2 ,'#06b'))
+                    # print("E[7:6]>>6: " + format(p_b_3 ,'#06b'))
+                    # print("C[7:0]<<6: " + format(p_c_1 ,'#06b'))
+                    # print("G[1:0]<<4: " + format(p_c_2 ,'#06b'))
+                    # print("F[7:4]>>4: " + format(p_c_3 ,'#06b'))
+                    # print("D[7:0]<<6: " + format(p_d_1 ,'#06b'))
+                    # print("G[7:2]>>2: " + format(p_d_2 ,'#06b'))
 
-                c_id = 0
-                for p_x in [p_a, p_b, p_c, p_d]:
-                    id_x = (p_x & int.from_bytes(b'\x03\x00',"little"))
-                    # Row
-                    if id_x == 2:
-                        row = (p_x >> 4)
+                    p_a = p_a_1 + p_a_2
+                    p_b = p_b_1 + p_b_2 + p_b_3
+                    p_c = p_c_1 + p_c_2 + p_c_3
+                    p_d = p_d_1 + p_d_2
 
-                    if id_x == 1:
-                        col = (p_x >> 3)
-                        print(str(row) + " : " + str(col))
-
-                    c_id += 1
+                    # print("p_A: " + format(p_a,'#06b'))
+                    # print("p_B: " + format(p_b,'#06b'))
+                    # print("p_C: " + format(p_c,'#06b'))
+                    # print("p_D: " + format(p_d,'#06b'))
 
 
-                pdb.set_trace()
+                    p_x = [p_a, p_b, p_c, p_d]
 
+                    id_a = (p_a & int.from_bytes(b'\x03\x00',"little"))
+                    id_b = (p_b & int.from_bytes(b'\x03\x00',"little"))
+                    id_c = (p_c & int.from_bytes(b'\x03\x00',"little"))
+                    id_d = (p_d & int.from_bytes(b'\x03\x00',"little"))
 
-            line = ifile.read(8)
-            print("Timestamp")
-            a = log_8_nibbles_b(int.from_bytes(line, "little"))
+                    for p_x in [p_a, p_b, p_c, p_d]:
+                        id_x = (p_x & int.from_bytes(b'\x03\x00',"little"))
 
+                        # Timestamp
+                        if id_x == 3:
+                            if t_s < 0:
+                                t_s = 0
+                                old_t_s = (p_x >> 2)
+                            else:
+                                # pdb.set_trace()
+                                t_s = t_s + max(0,(p_x >> 2)-old_t_s)
+                                old_t_s = (p_x >> 2)
 
-            line = ifile.read(4)
-            print("IMU count")
-            a = log_8_nibbles_b(int.from_bytes(line, "little"))
+                        # Row
+                        if id_x == 2:
+                            row = (p_x >> 4)
 
-            # Reading IMU Data
-            line = ifile.read(a*32)
+                        # Column
+                        if id_x == 1:
+                            col = (p_x >> 3)
+                            csvwriter.writerow([row] + [col] + [t_s])
+                            # print(str(row) + " : " + str(col) + " | " + str((t_s-3339)*10))
 
-
-
-
-        # c = 0
-        # k = 1
-        # while True:
-        #     pos = ifile.tell()
-        #     line = ifile.read(4)
-        #     if line == b'':
-        #         break
-        #     a = int.from_bytes(line, "little")
-        #     c += 1
-        #     if a == 357001:
-        #         print("c = " + str(c) + "**************************")
-        #         c = 0
-        #         k += 1
-        #         print("k = " + str(k) + ": a = " + str(a) + " at pos = " + str(pos))
-        #         ifile.read(a)
-        #         print("Timestamp")
-        #         line = ifile.read(8)
-        #         a = log_8_nibbles_b(int.from_bytes(line, "little"))
-        #         print("@@@" + str(ifile.tell()))
-        #         print("IMU count")
-        #         line = ifile.read(4)
-        #         a = log_8_nibbles_b(int.from_bytes(line, "little"))
-        #     else:
-        #         ifile.seek(pos)
-        #         ifile.read(1)
-        #         c += 1
+                            count += 1
+                            if count >= 60000:
+                                stopLoop = True
+                                break
 
 
 
-# 572,551,0
-# 573,556,0
-# 574,540,10
-# 574,572,10
-# 574,573,10
-# 575,540,10
-# 575,544,10
-# 575,547,10
-# 575,571,10
-# 575,582,10
 
 
-
-        #
-        #
-        # #Package Length
-        # print("Package Length")
-        # line = ifile.read(4)
-        # a = log_8_nibbles_b(int.from_bytes(line, "little"))
-        #
-        # # Package Buffer
-        # line = ifile.read(a)
-        #
-        # #Package Timestamp
-        # line = ifile.read(8)
-        #
-        # #IMU count
-        # print("IMU count")
-        # line = ifile.read(4)
-        # a = log_8_nibbles_b(int.from_bytes(line, "little"))
-        #
-        # #IMU data
-        # line = ifile.read(a*28)
-        #
-        # #Package Length
-        # print("Package Length")
-        # line = ifile.read(4)
-        # a = log_8_nibbles_b(int.from_bytes(line, "little"))
+                line = ifile.read(8)
+                print("Timestamp")
+                a = log_8_nibbles_b(int.from_bytes(line, "little"))
 
 
-        print("\n")
+                line = ifile.read(4)
+                print("IMU count")
+                a = log_8_nibbles_b(int.from_bytes(line, "little"))
+
+                # Reading IMU Data
+                line = ifile.read(a*32)
+
+            print("\n")
 
 
     finally:
