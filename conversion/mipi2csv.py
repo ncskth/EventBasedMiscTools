@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
 import sys, getopt
-import scipy.io as sio
-import numpy as np
 import time
 import csv
 from struct import *
@@ -116,6 +114,10 @@ def convert(argv, flag=False, n=-1):
         print("\n")
         print("DATA")
 
+
+        row = -1
+        col = -1
+
         #Package Length
         count = 0
         while True:
@@ -134,11 +136,70 @@ def convert(argv, flag=False, n=-1):
             line = ifile.read(a)
 
             for i in range(int(a/7)):
-                p_a = line[i*7+0]<<6 + 0 # E[5:0]
-                p_b = line[i*7+1]<<6 + 0 # F[3:0] + E[7:6]
-                p_c = line[i*7+2]<<6 + 0 # G[1:0] + F[7:4]
-                p_d = line[i*7+3]<<6 + 0 # G[7:2]
+
+                print("Byte_A: " + format(line[i*7+0],'#06b'))
+                print("Byte_B: " + format(line[i*7+1],'#06b'))
+                print("Byte_C: " + format(line[i*7+2],'#06b'))
+                print("Byte_D: " + format(line[i*7+3],'#06b'))
+                print("Byte_E: " + format(line[i*7+4],'#06b'))
+                print("Byte_F: " + format(line[i*7+5],'#06b'))
+                print("Byte_G: " + format(line[i*7+6],'#06b'))
+
+                p_a_1 = (line[i*7+0])<<6
+                p_a_2 = (line[i*7+4] & (int.from_bytes(b'\x3F',"little")))
+                p_b_1 = (line[i*7+1])<<6
+                p_b_2 = (line[i*7+5] & (int.from_bytes(b'\x0F',"little")))<<2
+                p_b_3 = (line[i*7+4] & (int.from_bytes(b'\xC0',"little")))>>6
+                p_c_1 = (line[i*7+2])<<6
+                p_c_2 = (line[i*7+6] & (int.from_bytes(b'\x03',"little")))<<4
+                p_c_3 = (line[i*7+5] & (int.from_bytes(b'\xF0',"little")))>>4
+                p_d_1 = (line[i*7+3])<<6
+                p_d_2 = (line[i*7+6] & (int.from_bytes(b'\xFC',"little")))>>2
+
+                print("A[7:0]<<6: " + format(p_a_1 ,'#06b'))
+                print("E[5:0]: " + format(p_a_2 ,'#06b'))
+                print("B[7:0]<<6: " + format(p_b_1 ,'#06b'))
+                print("F[3:0]<<2: " + format(p_b_2 ,'#06b'))
+                print("E[7:6]>>6: " + format(p_b_3 ,'#06b'))
+                print("C[7:0]<<6: " + format(p_c_1 ,'#06b'))
+                print("G[1:0]<<4: " + format(p_c_2 ,'#06b'))
+                print("F[7:4]>>4: " + format(p_c_3 ,'#06b'))
+                print("D[7:0]<<6: " + format(p_d_1 ,'#06b'))
+                print("G[7:2]>>2: " + format(p_d_2 ,'#06b'))
+
+                p_a = p_a_1 + p_a_2
+                p_b = p_b_1 + p_b_2 + p_b_3
+                p_c = p_c_1 + p_c_2 + p_c_3
+                p_d = p_d_1 + p_d_2
                 # format(p_a, '#01x')
+
+                print("p_A: " + format(p_a,'#06b'))
+                print("p_B: " + format(p_b,'#06b'))
+                print("p_C: " + format(p_c,'#06b'))
+                print("p_D: " + format(p_d,'#06b'))
+
+
+                p_x = [p_a, p_b, p_c, p_d]
+
+                id_a = (p_a & int.from_bytes(b'\x03\x00',"little"))
+                id_b = (p_b & int.from_bytes(b'\x03\x00',"little"))
+                id_c = (p_c & int.from_bytes(b'\x03\x00',"little"))
+                id_d = (p_d & int.from_bytes(b'\x03\x00',"little"))
+
+                c_id = 0
+                for p_x in [p_a, p_b, p_c, p_d]:
+                    id_x = (p_x & int.from_bytes(b'\x03\x00',"little"))
+                    # Row
+                    if id_x == 2:
+                        row = (p_x >> 4)
+
+                    if id_x == 1:
+                        col = (p_x >> 3)
+                        print(str(row) + " : " + str(col))
+
+                    c_id += 1
+
+
                 pdb.set_trace()
 
 
