@@ -2,6 +2,7 @@
 
 import sys, getopt
 import time
+import numpy as np
 import csv
 from struct import *
 import sys
@@ -117,9 +118,10 @@ def convert(argv, flag=False, n=-1):
 
         row = -1
         col = -1
-        t_s = -1
+        t = -1
 
-        count = 0
+        mat = np.zeros((800,1280), dtype = np.int8)
+
         stopLoop = False
 
         with open(outputfile, 'w') as ofile:
@@ -132,26 +134,14 @@ def convert(argv, flag=False, n=-1):
                 if line == b'':
                         break
 
-                # print("Package Length")
-                # a = log_8_nibbles_b(int.from_bytes(line, "little"))
-
-                a = int.from_bytes(line, "little")
-
                 # Reading Package Buffer
+                a = int.from_bytes(line, "little")
                 line = ifile.read(a)
 
                 for i in range(int(a/7)):
 
                     if stopLoop:
                         break
-
-                    # print("Byte_A: " + format(line[i*7+0],'#06b'))
-                    # print("Byte_B: " + format(line[i*7+1],'#06b'))
-                    # print("Byte_C: " + format(line[i*7+2],'#06b'))
-                    # print("Byte_D: " + format(line[i*7+3],'#06b'))
-                    # print("Byte_E: " + format(line[i*7+4],'#06b'))
-                    # print("Byte_F: " + format(line[i*7+5],'#06b'))
-                    # print("Byte_G: " + format(line[i*7+6],'#06b'))
 
                     p_a_1 = (line[i*7+0])<<6
                     p_a_2 = (line[i*7+4] & (int.from_bytes(b'\x3F',"little")))
@@ -164,47 +154,25 @@ def convert(argv, flag=False, n=-1):
                     p_d_1 = (line[i*7+3])<<6
                     p_d_2 = (line[i*7+6] & (int.from_bytes(b'\xFC',"little")))>>2
 
-                    # print("A[7:0]<<6: " + format(p_a_1 ,'#06b'))
-                    # print("E[5:0]: " + format(p_a_2 ,'#06b'))
-                    # print("B[7:0]<<6: " + format(p_b_1 ,'#06b'))
-                    # print("F[3:0]<<2: " + format(p_b_2 ,'#06b'))
-                    # print("E[7:6]>>6: " + format(p_b_3 ,'#06b'))
-                    # print("C[7:0]<<6: " + format(p_c_1 ,'#06b'))
-                    # print("G[1:0]<<4: " + format(p_c_2 ,'#06b'))
-                    # print("F[7:4]>>4: " + format(p_c_3 ,'#06b'))
-                    # print("D[7:0]<<6: " + format(p_d_1 ,'#06b'))
-                    # print("G[7:2]>>2: " + format(p_d_2 ,'#06b'))
-
                     p_a = p_a_1 + p_a_2
                     p_b = p_b_1 + p_b_2 + p_b_3
                     p_c = p_c_1 + p_c_2 + p_c_3
                     p_d = p_d_1 + p_d_2
 
-                    # print("p_A: " + format(p_a,'#06b'))
-                    # print("p_B: " + format(p_b,'#06b'))
-                    # print("p_C: " + format(p_c,'#06b'))
-                    # print("p_D: " + format(p_d,'#06b'))
-
-
                     p_x = [p_a, p_b, p_c, p_d]
-
-                    id_a = (p_a & int.from_bytes(b'\x03\x00',"little"))
-                    id_b = (p_b & int.from_bytes(b'\x03\x00',"little"))
-                    id_c = (p_c & int.from_bytes(b'\x03\x00',"little"))
-                    id_d = (p_d & int.from_bytes(b'\x03\x00',"little"))
 
                     for p_x in [p_a, p_b, p_c, p_d]:
                         id_x = (p_x & int.from_bytes(b'\x03\x00',"little"))
 
                         # Timestamp
                         if id_x == 3:
-                            if t_s < 0:
-                                t_s = 0
-                                old_t_s = (p_x >> 2)
+                            if t < 0:
+                                t = 0
+                                old_t = (p_x >> 2)
                             else:
                                 # pdb.set_trace()
-                                t_s = t_s + max(0,(p_x >> 2)-old_t_s)
-                                old_t_s = (p_x >> 2)
+                                t = t + max(0,(p_x >> 2)-old_t)
+                                old_t = (p_x >> 2)
 
                         # Row
                         if id_x == 2:
@@ -213,29 +181,21 @@ def convert(argv, flag=False, n=-1):
                         # Column
                         if id_x == 1:
                             col = (p_x >> 3)
-                            csvwriter.writerow([row] + [col] + [t_s])
-                            # print(str(row) + " : " + str(col) + " | " + str((t_s-3339)*10))
+                            pol = 1-mat[row,col]
+                            mat[row,col] = pol
+                            csvwriter.writerow([t] + [col] + [row] + [pol])
 
-                            count += 1
-                            if count >= 60000:
-                                stopLoop = True
-                                break
-
-
-
-
-
+                # Package Timestamp
                 line = ifile.read(8)
-                print("Timestamp")
-                a = log_8_nibbles_b(int.from_bytes(line, "little"))
 
-
+                # IMU count
                 line = ifile.read(4)
-                print("IMU count")
-                a = log_8_nibbles_b(int.from_bytes(line, "little"))
+                a = int.from_bytes(line, "little")
 
                 # Reading IMU Data
-                line = ifile.read(a*32)
+                # line = ifile.read(a*32)
+                pos = ifile.tell()
+                ifile.seek(pos+a*32)
 
             print("\n")
 
