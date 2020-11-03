@@ -13,70 +13,6 @@ import pdb
 binatt = ["data_type", "loopA_mode", "loopB_mode", "loopC_mode", "event_data_format", "hour", "minute", "second", "package_count"]
 
 '''
-    This function prints 8 nibbles of a 32-bit integer
-'''
-def log_8_nibbles_b(a):
-
-    nibble1 = format((a & int.from_bytes(b'\x00\x00\x00\xF0',"little"))>>28, '#06b')
-    nibble2 = format((a & int.from_bytes(b'\x00\x00\x00\x0F',"little"))>>24, '#06b')
-    nibble3 = format((a & int.from_bytes(b'\x00\x00\xF0\x00',"little"))>>20, '#06b')
-    nibble4 = format((a & int.from_bytes(b'\x00\x00\x0F\x00',"little"))>>16, '#06b')
-    nibble5 = format((a & int.from_bytes(b'\x00\xF0\x00\x00',"little"))>>12, '#06b')
-    nibble6 = format((a & int.from_bytes(b'\x00\x0F\x00\x00',"little"))>>8, '#06b')
-    nibble7 = format((a & int.from_bytes(b'\xF0\x00\x00\x00',"little"))>>4, '#06b')
-    nibble8 = format((a & int.from_bytes(b'\x0F\x00\x00\x00',"little"))>>0, '#06b')
-
-    print("Original: " + str(a) + " --> " + nibble1 + " " + nibble2 +
-              " " + nibble3 + " " + nibble4 + " " + nibble5 + " " + nibble6 +
-              " " + nibble7 + " " + nibble8 + "\n")
-    return a
-
-
-'''
-    This function prints 8 nibbles of a 32-bit integer
-'''
-def log_8_nibbles_h(a):
-
-    nibble1 = format((a & int.from_bytes(b'\x00\x00\x00\xF0',"little"))>>28, '#01x')
-    nibble2 = format((a & int.from_bytes(b'\x00\x00\x00\x0F',"little"))>>24, '#01x')
-    nibble3 = format((a & int.from_bytes(b'\x00\x00\xF0\x00',"little"))>>20, '#01x')
-    nibble4 = format((a & int.from_bytes(b'\x00\x00\x0F\x00',"little"))>>16, '#01x')
-    nibble5 = format((a & int.from_bytes(b'\x00\xF0\x00\x00',"little"))>>12, '#01x')
-    nibble6 = format((a & int.from_bytes(b'\x00\x0F\x00\x00',"little"))>>8, '#01x')
-    nibble7 = format((a & int.from_bytes(b'\xF0\x00\x00\x00',"little"))>>4, '#01x')
-    nibble8 = format((a & int.from_bytes(b'\x0F\x00\x00\x00',"little"))>>0, '#01x')
-
-    print(nibble7 + " " + nibble8)
-    print(nibble5 + " " + nibble6)
-    print(nibble3 + " " + nibble4)
-    print(nibble1 + " " + nibble2)
-
-    return a
-
-
-'''
-    This function prints 2 nibbles of a 32-bit integer
-'''
-def log_2_nibbles_b(a):
-    nibble1 = format((a & int.from_bytes(b'\xF0\x00\x00\x00',"little"))>>4, '#06b')
-    nibble2 = format((a & int.from_bytes(b'\x0F\x00\x00\x00',"little"))>>0, '#06b')
-
-    print("Original: " + str(a) + " --> " + nibble1 + " " + nibble2 + "\n")
-
-    return a
-
-'''
-    This function prints 2 nibbles of a 32-bit integer
-'''
-def log_2_nibbles_h(a):
-    nibble1 = format((a & int.from_bytes(b'\xF0\x00\x00\x00',"little"))>>4, '#01x')
-    nibble2 = format((a & int.from_bytes(b'\x0F\x00\x00\x00',"little"))>>0, '#01x')
-
-    print(nibble1 + " " + nibble2)
-
-    return a
-
-'''
 This function reads a *.mipi file, decodes it and writes a *.csv file
 '''
 def convert(argv, flag=False, n=-1):
@@ -101,25 +37,22 @@ def convert(argv, flag=False, n=-1):
         print("\n")
         print("HEADER")
 
+        # uint8_t x 8
         for i in range(8):
             print(binatt[i])
             line = ifile.read(1)
-            log_2_nibbles_b(int.from_bytes(line, "little"))
-            print("\n")
-
+        # uint32_t
         print("package_count")
         line = ifile.read(4)
-        log_8_nibbles_b(int.from_bytes(line, "little"))
-        print("\n")
 
         print("\n")
         print("DATA")
+        print("...")
 
 
         row = -1
         col = -1
         t = -1
-
         mat = np.zeros((800,1280), dtype = np.int8)
 
         stopLoop = False
@@ -192,8 +125,7 @@ def convert(argv, flag=False, n=-1):
                 line = ifile.read(4)
                 a = int.from_bytes(line, "little")
 
-                # Reading IMU Data
-                # line = ifile.read(a*32)
+                # Skipping IMU Data
                 pos = ifile.tell()
                 ifile.seek(pos+a*32)
 
