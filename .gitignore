@@ -3,3 +3,5 @@
 *.aedat4
 *.raw
 *.pdf
+*.pyc
+*.png

@@ -1,60 +1,11 @@
 #!/usr/bin/python
 
 from dv import AedatFile
-import sys, getopt
-import time
 import csv
-
-# Masks to decode events
-mask_e_type = b"\x00\x00\x00\xF0"
-mask_t_base = b"\x00\x00\xC0\x0F"
-mask_t_high = b"\xFF\xFF\xFF\x0F"
-mask_x_pixel = b"\x00\xF8\x3F\x00"
-mask_y_pixel = b"\xFF\x07\x00\x00"
-
-# Bit Shifters to decode events
-shift_e_type = 28
-shift_x_pixel = 11
-shift_y_pixel = 0
-shift_t_base = 22
-shift_t_high = 6
-
-global t_base
-t_base = 0
-global header
-header = True
-global line_count
-line_count = 0
-
-"""
-    To parse all the events in a *.aedat4 file:
-        python3 parse_any.py -i filename.aedat4 -n -1
-    To parse 23 the events in a *.raw file:
-        python3 parse_any.py -i filename.raw -n 23
-"""
-
-
-def getInputs(argv):
-    inputfile = ""
-    outputfile = ""
-    try:
-        opts, args = getopt.getopt(argv, "i:n:", ["ifile=", "nevents="])
-    except getopt.GetoptError:
-        print("parse_any.py -i <inputfile> -n <nb_events>")
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt in ("-i", "--ifile"):
-            inputfile = arg
-        elif opt in ("-n", "--nevents"):
-            nb_events = int(arg)
-    return inputfile, nb_events
-
 
 """
     This generator yields an event using timestamp (t), pixel coordinates (x,y) and polarity (p)
 """
-
-
 def getNextEvent(inputfile):
 
     # This block corresponds to the *.csv parser
@@ -84,8 +35,23 @@ def getNextEvent(inputfile):
     # This block corresponds to the *.raw parser
     if ".raw" in inputfile:
         print(".raw !!!")
-        global t_base
-        global header
+
+        t_base = 0
+        header = True
+
+        # Masks to decode events
+        mask_e_type = b"\x00\x00\x00\xF0"
+        mask_t_base = b"\x00\x00\xC0\x0F"
+        mask_t_high = b"\xFF\xFF\xFF\x0F"
+        mask_x_pixel = b"\x00\xF8\x3F\x00"
+        mask_y_pixel = b"\xFF\x07\x00\x00"
+
+        # Bit Shifters to decode events
+        shift_e_type = 28
+        shift_x_pixel = 11
+        shift_y_pixel = 0
+        shift_t_base = 22
+        shift_t_high = 6
 
         with open(inputfile, "rb") as ifile:
 
@@ -134,52 +100,3 @@ def getNextEvent(inputfile):
                 elif p1 == 8:
                     p2 = (a & int.from_bytes(mask_t_high, "little")) << shift_t_high
                     t_base = p2
-
-
-"""
-    This functions returns 'True' when the expected number of events to parse is reached
-"""
-
-
-def stopParsing(nb_events):
-
-    global line_count
-    # Check if enough events have been parsed
-    if (nb_events > 0) and (line_count > nb_events):
-        # Stop parsing since nb_events reached
-        return True
-    else:
-        return False
-
-
-"""
-    Dummy function that prints out the first k events from the input file
-"""
-
-
-def doSomething(t, x, y, p):
-    global line_count
-    k = 5  # max number of events to print out
-    line_count += 1
-    if line_count <= k:
-        print(str(t) + "|" + str(x) + "|" + str(y) + "|" + str(p))
-    elif line_count == k + 1:
-        print("...")
-
-
-if __name__ == "__main__":
-
-    inputfile, nb_events = getInputs(sys.argv[1:])
-    start = time.time()
-
-    # This loop
-    for t, x, y, p in getNextEvent(inputfile):
-
-        doSomething(t, x, y, p)
-
-        if stopParsing(nb_events):
-            break
-
-    stop = time.time()
-    elapsed = stop - start
-    print("Parser took: " + str(int(elapsed)) + " seconds.")
