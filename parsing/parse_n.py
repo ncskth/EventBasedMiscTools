@@ -11,6 +11,8 @@ line_count = 0
     To parse 23 the events in a *.raw file:
         python3 parse_any.py -i filename.raw -n 23
 """
+
+
 def getInputs(argv):
     inputfile = ""
     outputfile = ""
@@ -26,9 +28,12 @@ def getInputs(argv):
             nb_events = int(arg)
     return inputfile, nb_events
 
+
 """
     This functions returns 'True' when the expected number of events to parse is reached
 """
+
+
 def stopParsing(nb_events):
 
     global line_count
@@ -39,9 +44,12 @@ def stopParsing(nb_events):
     else:
         return False
 
+
 """
     Dummy function that prints out the first k events from the input file
 """
+
+
 def doSomething(t, x, y, p):
     global line_count
     k = 5  # max number of events to print out
@@ -50,7 +58,6 @@ def doSomething(t, x, y, p):
         print(str(t) + "|" + str(x) + "|" + str(y) + "|" + str(p))
     elif line_count == k + 1:
         print("...")
-
 
 
 if __name__ == "__main__":

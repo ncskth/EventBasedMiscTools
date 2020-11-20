@@ -4,8 +4,10 @@ from dv import AedatFile
 import csv
 
 """
-    This generator yields an event using timestamp (t), pixel coordinates (x,y) and polarity (p)
+    This generator yields an event using timestamp in ms (t), pixel coordinates (x,y) and polarity (p)
 """
+
+
 def getNextEvent(inputfile):
 
     # This block corresponds to the *.csv parser
