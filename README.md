@@ -11,7 +11,7 @@ $ sudo apt-get install dv-runtime-dev
 
 ### Parsing
 
-The [parser](https://github.com/ncskth/EventBasedMiscTools/blob/main/parsing/parser.py) is a generator that decodes data from files using one of the following formats:  *.raw, *.aedat4 or *.bin (mipi) files. It can be used in a loop, like in [parse_n.py](https://github.com/ncskth/EventBasedMiscTools/blob/main/parsing/parse_n.py):
+The [parser](https://github.com/ncskth/EventBasedMiscTools/blob/main/parsing/parser.py) is a generator that decodes data from one of the following formats:  *.raw, *.aedat4 or *.csv. It can be used in a loop, like in [parse_n.py](https://github.com/ncskth/EventBasedMiscTools/blob/main/parsing/parse_n.py):
 
 ```sh
 $ python3 parse_n.py -i <filename>.<format> -n <nb_of_events>
@@ -29,4 +29,4 @@ So far, the analysis consists on counting events in 100ms bins and generating a 
 
 ```sh
 $ python3 analyze_csv.py -i <filename>.csv
-``` 
+```
